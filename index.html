@@ -87,17 +87,18 @@
   /* カード（99×138mm。文字はカードの幅を基準にする） */
   .cardwrap { container-type: inline-size; width: 100%; max-width: 440px; margin: 0 auto 12px; }
   .card { position: relative; width: 100%; aspect-ratio: 99 / 138; background: #ffffff; color: #2a1a1a; border: 1px solid #c9b9b8;
-    padding: 7.07cqw; overflow: hidden; font-family: var(--font); font-size: 3.57cqw; line-height: 1.6; }
+    padding: 7.07cqw; overflow: hidden; font-family: var(--font); font-size: calc(3.57cqw * var(--f, 1)); line-height: 1.6; }
+  .card.lg { aspect-ratio: 138 / 196; padding: calc(7.07cqw * 99 / 138); }
   .card .inner { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
-  .card .shop { font-size: 3.57cqw; color: #5e4c4c; margin: 0 0 1cqw; letter-spacing: .05em; overflow-wrap: anywhere; }
-  .card .title { font-size: 4.64cqw; font-weight: 800; line-height: 1.4; margin: 0 0 3cqw; overflow-wrap: anywhere; }
-  .card .ch { font-size: 3.57cqw; font-weight: 800; color: #9e3d3f; border-bottom: .35cqw solid #9e3d3f; padding: 0 0 .8cqw; margin: 0 0 2cqw; }
+  .card .shop { font-size: calc(3.57cqw * var(--f, 1)); color: #5e4c4c; margin: 0 0 1cqw; letter-spacing: .05em; overflow-wrap: anywhere; }
+  .card .title { font-size: calc(4.64cqw * var(--f, 1)); font-weight: 800; line-height: 1.4; margin: 0 0 3cqw; overflow-wrap: anywhere; }
+  .card .ch { font-size: calc(3.57cqw * var(--f, 1)); font-weight: 800; color: #9e3d3f; border-bottom: .35cqw solid #9e3d3f; padding: 0 0 .8cqw; margin: 0 0 2cqw; }
   .card ul { list-style: none; margin: 0 0 3cqw; padding: 0; }
   .card li { padding-left: 1em; text-indent: -1em; margin: 0 0 .6cqw; overflow-wrap: anywhere; }
   .card .hm, .card .thanks, .card .contact { margin: 0 0 1.6cqw; overflow-wrap: anywhere; }
   .card .foot { margin-top: auto; padding-top: 2cqw; }
   .card .thanks { font-weight: 700; }
-  .card .contact { font-size: 3.57cqw; color: #463434; }
+  .card .contact { font-size: calc(3.57cqw * var(--f, 1)); color: #463434; }
   .card .empty { color: #8a7270; }
   .fitmsg { font-weight: 700; font-size: 15px; margin: 0 0 10px; }
   .fitmsg.ng { color: var(--danger); }
@@ -116,7 +117,6 @@
     .jump { display: none; }
   }
   /* 印刷: A4縦に同じカードを2×2で4枚。周りの線で切り取る */
-  @page { size: A4 portrait; margin: 6mm; }
   @media print {
     html, body { background: #ffffff !important; color: #000000; }
     main { display: none !important; }
@@ -124,6 +124,9 @@
     #printArea .cardwrap { width: 99mm; max-width: none; margin: 0; }
     #printArea .pmsg { grid-column: 1 / -1; font-size: 14pt; margin: 20mm 0 0; }
     #printArea .card { width: 99mm; height: 138mm; border: .2mm dashed #9a9a9a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #printArea.lg { grid-template-columns: 138mm 138mm; grid-template-rows: 196mm; }
+    #printArea.lg .cardwrap { width: 138mm; }
+    #printArea.lg .card { width: 138mm; height: 196mm; }
   }
 </style>
 </head>
@@ -187,6 +190,7 @@
   </footer>
 </main>
 <div id="printArea" aria-hidden="true"></div>
+<style id="pageSize">@page { size: A4 portrait; margin: 6mm; }</style>
 
 <script id="core">
 var CC = (function () {
@@ -244,7 +248,7 @@ var CC = (function () {
       { id: 'heat', text: '直射日光や暖房の近くは、ひび割れの原因になります。' },
       { id: 'scratch', text: '小さな傷は、使ううちに目立たなくなることがあります。' }
     ] },
-    { id: 'metal', label: '金属のアクセサリー', hand: '形が少しずつ違います', qs: [
+    { id: 'metal', label: '金属のアクセサリー', hand: '形が違います', qs: [
       { id: 'kind', q: '金属の種類', opts: [{ id: 'brass', label: '真鍮', text: '素材は真鍮です。' }, { id: 'silver', label: '銀', text: '素材は銀（シルバー）です。' }, { id: 'steel', label: 'ステンレス', text: '素材はステンレスです。' }, { id: 'other', label: '入力する', text: '素材は{x}です。', input: { label: '金属の名前', def: '', ph: '例: 銅' } }] },
       { id: 'sweat', q: '汗や水に濡れたら', opts: [{ id: 'wipe', label: 'ふく', text: '汗や水に濡れたら、やわらかい布でふいてください。' }] },
       { id: 'tarnish', q: '色が変わることがありますか', opts: [{ id: 'yes', label: '変わる', text: '空気や汗にふれると、色が変わることがあります。' }] },
@@ -550,37 +554,48 @@ var CC = (function () {
     if (!CC.hasBody(b)) inner.appendChild(h('p', { class: 'empty', text: '素材を選んで質問に答えると、ここにカードができます。' }));
     return inner;
   }
-  // はみ出し判定: 中身を自然な高さで並べ、カードの内側の高さと比べる。
-  // 画面のプレビューと、画面の外に置いた印刷と同じ99mm幅のカードの両方で測り、どちらかで足りなければ止める。
-  // 余りが0.5行ぶん未満のときも止める（文字の描き方の差で、紙で最後の行が切れないように）
+  // 収め方を決める: 入りきらないときは止めず、文字を段階的に小さくし（10pt→8.5pt）、
+  // それでも入らなければ大きいカード（138×196mm・A4横に2枚）に切り替える。文は変えない。
+  // 印刷と同じ寸法のカードを画面の外に置いて測り、余りが0.5行ぶん未満なら入らない扱いにする（紙で最後の行が切れないように）
+  var SIZES = { n: { w: 99, h: 138, per: 4 }, lg: { w: 138, h: 196, per: 2 } };
+  var STEPS = [['n', 1], ['n', .95], ['n', .9], ['n', .85], ['lg', 1], ['lg', .95], ['lg', .9], ['lg', .85], ['lg', .8], ['lg', .75], ['lg', .7]];
   function measureCard(card) {
-    var inner = card.firstChild; if (!inner) return { over: false, lines: 0 };
+    var inner = card.firstChild; if (!inner) return true;
     var cs = getComputedStyle(card), avail = card.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     var lineH = parseFloat(cs.fontSize) * 1.6;
     inner.style.height = 'auto'; var foot = inner.querySelector('.foot'); if (foot) foot.style.marginTop = '0';
     var natural = inner.scrollHeight;
     inner.style.height = ''; if (foot) foot.style.marginTop = '';
-    var short = natural - (avail - lineH * 0.5);
-    return { over: short > 0, lines: short > 0 ? Math.max(1, Math.ceil(short / lineH)) : 0 };
+    return natural <= avail - lineH * 0.5;
   }
   var measureBox = null;
-  function overInfo(b) {
+  function makeCard(b, fit, mm) {
+    var z = SIZES[fit.size], f = fit.s * 99 / z.w;
+    var st = '--f:' + f + (mm ? ';width:' + z.w + 'mm;height:' + z.h + 'mm;aspect-ratio:auto;border:.2mm dashed #9a9a9a' : '');
+    return h('div', { class: 'card' + (fit.size === 'lg' ? ' lg' : ''), style: st }, [cardInner(b)]);
+  }
+  function fitFor(b) {
     if (!measureBox) {
-      measureBox = h('div', { 'aria-hidden': 'true', style: 'position:absolute;left:-10000px;top:0;width:99mm;visibility:hidden' });
+      measureBox = h('div', { 'aria-hidden': 'true', style: 'position:absolute;left:-10000px;top:0;visibility:hidden' });
       document.body.appendChild(measureBox);
     }
+    for (var i = 0; i < STEPS.length; i++) {
+      var fit = { size: STEPS[i][0], s: STEPS[i][1] }, z = SIZES[fit.size];
+      measureBox.textContent = '';
+      var card = makeCard(b, fit, true);
+      measureBox.appendChild(h('div', { class: 'cardwrap', style: 'width:' + z.w + 'mm;max-width:none;margin:0' }, [card]));
+      if (measureCard(card)) { measureBox.textContent = ''; return fit; }
+    }
     measureBox.textContent = '';
-    var card = h('div', { class: 'card', style: 'width:99mm;height:138mm;aspect-ratio:auto;border:.2mm dashed #9a9a9a' }, [cardInner(b)]);
-    measureBox.appendChild(h('div', { class: 'cardwrap', style: 'width:99mm;max-width:none;margin:0' }, [card]));
-    var a = measureCard(card), s = measureCard($('card'));
-    return { over: a.over || s.over, lines: Math.max(a.lines, s.lines) };
+    return null;
   }
-  function overflowing() { return overInfo(CC.build(state)).over; }
+  function overflowing() { return !fitFor(CC.build(state)); }
   var lastBuild = null;
   function update(noSave) {
     if (noSave !== true) writeStore();
     var b = CC.build(state); lastBuild = b;
-    var card = $('card'); card.textContent = ''; card.appendChild(cardInner(b));
+    var fit = fitFor(b), last = fit || { size: 'lg', s: .7 };
+    var card = $('card'), nc = makeCard(b, last, false); nc.id = 'card'; nc.setAttribute('aria-label', 'カードのプレビュー'); card.parentNode.replaceChild(nc, card);
     // 誤り
     ['name', 'shop', 'thanks', 'contact'].forEach(function (k) {
       var id = { name: 'fName', shop: 'fShop', thanks: 'fThanks', contact: 'fContact' }[k];
@@ -592,12 +607,15 @@ var CC = (function () {
     $('fireWarn').hidden = !(m && CC.fireRemoved(state, m));
     $('decoHint').hidden = !(m && m.id === 'candle' && (state.ans.candle || {}).use === 'deco');
     // 印刷・コピーの可否
-    var oi = overInfo(b), over = oi.over, err = CC.hasErr(b), body = !!b.items.length || !!b.name;
-    var fm = $('fitMsg');
+    var over = !fit, err = CC.hasErr(b), body = !!b.items.length || !!b.name;
+    var fm = $('fitMsg'), pt = fit ? Math.round(fit.s * 10 * 10) / 10 : 0;
     if (err) { fm.className = 'fitmsg ng'; fm.textContent = '入力に直すところがあります（赤い欄）。直すと印刷・コピーできます。'; }
-    else if (over) { fm.className = 'fitmsg ng'; fm.textContent = 'カードに入りきりません（あと約' + oi.lines + '行ぶん多いです）。項目を減らすか、文を短くしてください。全部書きたいときは「文をコピー」で商品ページに貼れます。'; }
+    else if (over) { fm.className = 'fitmsg ng'; fm.textContent = '文字を小さくしても入りきりませんでした。文を短くしてください。'; }
     else if (!body) { fm.className = 'fitmsg ok'; fm.textContent = ''; }
-    else { fm.className = 'fitmsg ok'; fm.textContent = 'カードに入りきっています。'; }
+    else if (fit.size === 'n' && fit.s === 1) { fm.className = 'fitmsg ok'; fm.textContent = 'カードに入りきっています（99×138mm・A4に4枚）。'; }
+    else if (fit.size === 'n') { fm.className = 'fitmsg ok'; fm.textContent = '項目が多いので、文字を少し小さくして収めました（本文' + pt + 'pt・99×138mm・A4に4枚）。'; }
+    else { fm.className = 'fitmsg ok'; fm.textContent = '項目が多いので、大きいカードに切り替えて収めました（本文' + pt + 'pt・138×196mm・A4横に2枚）。'; }
+    $('printBtn').textContent = fit && fit.size === 'lg' ? '印刷（A4横に2枚）' : '印刷（A4に4枚）';
     $('printBtn').disabled = err || over || !body;
     $('copyBtn').disabled = err || !body;
     var ca = $('copyArea'); if (!ca.hidden) ca.value = CC.plainText(b);
@@ -608,12 +626,14 @@ var CC = (function () {
   // 印刷: ボタン・Ctrl+P・ブラウザのメニュー・iPhoneの共有→プリントのどれでも、印刷の直前に今の内容で作り直す
   function fillPrint() {
     var b = CC.build(state), pa = $('printArea'); pa.textContent = '';
-    var body = !!b.items.length || !!b.name;
-    if (CC.hasErr(b) || !body || overInfo(b).over) {
-      pa.appendChild(h('p', { class: 'pmsg', text: '印刷できる状態ではありません。画面に戻って、カードに入りきる内容にしてから印刷してください。' }));
+    var body = !!b.items.length || !!b.name, fit = CC.hasErr(b) || !body ? null : fitFor(b);
+    pa.className = fit && fit.size === 'lg' ? 'lg' : '';
+    $('pageSize').textContent = '@page { size: A4 ' + (fit && fit.size === 'lg' ? 'landscape' : 'portrait') + '; margin: 6mm; }';
+    if (!fit) {
+      pa.appendChild(h('p', { class: 'pmsg', text: '印刷できる状態ではありません。画面に戻って、入力を直してから印刷してください。' }));
       return false;
     }
-    for (var i = 0; i < 4; i++) pa.appendChild(h('div', { class: 'cardwrap' }, [h('div', { class: 'card' }, [cardInner(b)])]));
+    for (var i = 0; i < SIZES[fit.size].per; i++) pa.appendChild(h('div', { class: 'cardwrap' }, [makeCard(b, fit, false)]));
     return true;
   }
   window.addEventListener('beforeprint', fillPrint);
