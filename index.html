@@ -67,7 +67,9 @@
   .q { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); }
   .q.on { border: 2px solid var(--accent); padding: 7px 9px; }
   .q .qt { font-weight: 700; margin: 0 0 6px; line-height: 1.4; overflow-wrap: anywhere; }
-  .ans { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 6px; }
+  .ans { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 6px; }
+  .ans.four { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  @media (min-width: 600px) { .ans.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   .ans button { min-height: 48px; padding: 6px 8px; }
   .ans button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 800; }
   .ans button.skip { color: var(--ink3); }
@@ -87,7 +89,7 @@
   .card { position: relative; width: 100%; aspect-ratio: 99 / 138; background: #ffffff; color: #2a1a1a; border: 1px solid #c9b9b8;
     padding: 7.07cqw; overflow: hidden; font-family: var(--font); font-size: 3.57cqw; line-height: 1.6; }
   .card .inner { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
-  .card .shop { font-size: 3.2cqw; color: #5e4c4c; margin: 0 0 1cqw; letter-spacing: .05em; overflow-wrap: anywhere; }
+  .card .shop { font-size: 3.57cqw; color: #5e4c4c; margin: 0 0 1cqw; letter-spacing: .05em; overflow-wrap: anywhere; }
   .card .title { font-size: 4.64cqw; font-weight: 800; line-height: 1.4; margin: 0 0 3cqw; overflow-wrap: anywhere; }
   .card .ch { font-size: 3.57cqw; font-weight: 800; color: #9e3d3f; border-bottom: .35cqw solid #9e3d3f; padding: 0 0 .8cqw; margin: 0 0 2cqw; }
   .card ul { list-style: none; margin: 0 0 3cqw; padding: 0; }
@@ -95,7 +97,7 @@
   .card .hm, .card .thanks, .card .contact { margin: 0 0 1.6cqw; overflow-wrap: anywhere; }
   .card .foot { margin-top: auto; padding-top: 2cqw; }
   .card .thanks { font-weight: 700; }
-  .card .contact { font-size: 3.2cqw; color: #463434; }
+  .card .contact { font-size: 3.57cqw; color: #463434; }
   .card .empty { color: #8a7270; }
   .fitmsg { font-weight: 700; font-size: 15px; margin: 0 0 10px; }
   .fitmsg.ng { color: var(--danger); }
@@ -105,10 +107,13 @@
     border: 1px solid #D8D8DC; border-radius: 6px; color: #3A3A3E; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.7; }
   .mw-footer p { margin: 0 0 6px; } .mw-footer p:last-child { margin-bottom: 0; } .mw-footer a { color: #0B5AA6; display: inline-block; padding: 13px 0; }
   #printArea { display: none; }
+  .jump { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; background: var(--surface); }
+  @media (max-width: 480px) { .cardwrap { margin-left: -14px; margin-right: -14px; width: calc(100% + 28px); max-width: none; } }
   @media (min-width: 960px) {
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 20px; align-items: start; }
     .side { position: sticky; top: 12px; }
     .side .cardwrap { max-width: min(440px, calc((100vh - 200px) * 99 / 138)); }
+    .jump { display: none; }
   }
   /* 印刷: A4縦に同じカードを2×2で4枚。周りの線で切り取る */
   @page { size: A4 portrait; margin: 6mm; }
@@ -117,6 +122,7 @@
     main { display: none !important; }
     #printArea { display: grid !important; grid-template-columns: 99mm 99mm; grid-template-rows: 138mm 138mm; justify-content: center; }
     #printArea .cardwrap { width: 99mm; max-width: none; margin: 0; }
+    #printArea .pmsg { grid-column: 1 / -1; font-size: 14pt; margin: 20mm 0 0; }
     #printArea .card { width: 99mm; height: 138mm; border: .2mm dashed #9a9a9a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
@@ -135,6 +141,7 @@
       <h2 id="inH">答える</h2>
       <div class="btns"><button type="button" id="sampleA">見本を入れる（木の器）</button><button type="button" id="sampleB">見本を入れる（真鍮のピアス）</button></div>
       <div id="confirmBox" class="confirm" hidden></div>
+      <p><a class="jump" href="#outSec">できあがりのカードを見る</a></p>
       <h3 id="matH">作品の素材</h3>
       <div class="mats" id="mats" role="radiogroup" aria-labelledby="matH"></div>
       <div id="qArea" hidden>
@@ -142,6 +149,7 @@
         <ul class="qs" id="qs"></ul>
         <h3>よくある注意 <span class="hint">（作品に合うものだけ選んでください）</span></h3>
         <ul class="notes" id="notes"></ul>
+        <p class="small" id="decoHint" hidden>火をつけない作品なら、上の火の注意は外せます。</p>
         <p class="warn" id="fireWarn" role="status" hidden>火の注意を外しました。火をつけて使う作品なら、入れておくことをおすすめします。</p>
         <div class="field" style="margin-top:10px">
           <label for="addNote">注意を1つ足す <span class="hint">（任意・40字まで）</span></label>
@@ -194,7 +202,7 @@ var CC = (function () {
       { id: 'micro', q: '電子レンジに使えますか', opts: [{ id: 'yes', label: '使える', text: '電子レンジが使えます。' }, { id: 'no', label: '使えない', text: '電子レンジは使えません。' }] },
       { id: 'soak', q: '水に浸けたままにしてよいですか', opts: [{ id: 'yes', label: 'よい', text: '水に浸けておいても大丈夫です。' }, { id: 'no', label: '浸けない', text: '水に浸けたままにしないでください。' }] },
       { id: 'dry', q: '洗ったあとの乾かし方', opts: [{ id: 'wipe', label: 'ふいて乾かす', text: '洗ったあとは、ふきんで水気をふいて乾かしてください。' }, { id: 'shade', label: '日陰で乾かす', text: '洗ったあとは、直射日光の当たらない所で乾かしてください。' }] },
-      { id: 'oil', q: 'お手入れに油を使いますか', opts: [{ id: 'yes', label: '使う', text: '乾いてきたら、{x}を薄くぬってください。', input: { label: '使う油の名前', def: '食用の油', ph: '例: えごま油' } }] }
+      { id: 'oil', q: 'お手入れに油を使いますか', opts: [{ id: 'yes', label: '使う', text: '乾いてきたら、{x}を薄くぬってください。', input: { label: '使う油の名前', def: '', ph: '例: えごま油' } }] }
     ], notes: [
       { id: 'color', text: 'カレーなど色の濃い料理は、色がうつることがあります。' },
       { id: 'change', text: '使ううちに、色や風合いが変わっていきます。' },
@@ -210,14 +218,14 @@ var CC = (function () {
       { id: 'dry', q: '洗ったあと', opts: [{ id: 'dry', label: 'よく乾かす', text: '洗ったあとは、よく乾かしてからしまってください。' }] }
     ], notes: [
       { id: 'heat', text: '急に熱いものや冷たいものを入れると、割れることがあります。' },
-      { id: 'kannyu', text: '表面の細かいひびの模様は、焼き物の特徴です。' },
+      { id: 'kannyu', text: '表面の細かいひびの模様は、焼いたときにできた風合いです。' },
       { id: 'stain', text: '色の濃い料理や油が、しみこむことがあります。' },
       { id: 'stack', text: '重ねるときは、布や紙をはさむと傷がつきにくくなります。' }
     ] },
     { id: 'cloth', label: '布', hand: '柄の出方が違います', qs: [
       { id: 'wash', q: '洗い方', opts: [{ id: 'hand', label: '手洗い', text: '洗うときは、手洗いをおすすめします。' }, { id: 'machine', label: '洗濯機', text: '洗濯ネットに入れて、洗濯機で洗えます。' }, { id: 'no', label: '洗えない', text: '水洗いはできません。' }] },
       { id: 'dryer', q: '乾燥機に使えますか', opts: [{ id: 'yes', label: '使える', text: '乾燥機が使えます。' }, { id: 'no', label: '使えない', text: '乾燥機は使えません。' }] },
-      { id: 'iron', q: 'アイロン', opts: [{ id: 'mid', label: '中温', text: 'アイロンは中温で、あて布をしてください。' }, { id: 'no', label: '使えない', text: 'アイロンは使えません。' }] },
+      { id: 'iron', q: 'アイロン', opts: [{ id: 'mid', label: '中温', text: 'アイロンは中温で、あて布をしてください。' }, { id: 'low', label: '低温', text: 'アイロンは低温で、あて布をしてください。' }, { id: 'no', label: '使えない', text: 'アイロンは使えません。' }] },
       { id: 'shrink', q: '洗うと縮みますか', opts: [{ id: 'yes', label: '縮むかも', text: '洗うと少し縮むことがあります。' }] },
       { id: 'fade', q: '色落ちしますか', opts: [{ id: 'yes', label: '色落ちする', text: 'はじめのうちは色落ちすることがあります。ほかのものと分けて洗ってください。' }] }
     ], notes: [
@@ -228,8 +236,8 @@ var CC = (function () {
     { id: 'leather', label: '革', hand: '革のしわや色が違います', qs: [
       { id: 'wet', q: '水に濡れたら', opts: [{ id: 'pat', label: '押さえてふく', text: '水に濡れたときは、乾いた布でやさしく押さえるようにふいてください。' }] },
       { id: 'dry', q: '濡れたあとの乾かし方', opts: [{ id: 'shade', label: '陰干し', text: '濡れたあとは、風通しのよい日陰で乾かしてください。ドライヤーは使わないでください。' }] },
-      { id: 'cream', q: 'お手入れにクリームを使いますか', opts: [{ id: 'yes', label: '使う', text: 'ときどき{x}を薄くぬってください。', input: { label: 'クリームの名前', def: '革用のクリーム', ph: '例: 革用のクリーム' } }, { id: 'no', label: '使わない', text: 'クリームなどは使わず、乾いた布でふくだけで大丈夫です。' }] },
-      { id: 'aging', q: '使ううちに色は変わりますか', opts: [{ id: 'yes', label: '変わる', text: '使ううちに色が濃くなり、つやが出てきます。' }] },
+      { id: 'cream', q: 'お手入れにクリームを使いますか', opts: [{ id: 'yes', label: '使う', text: 'ときどき{x}を薄くぬってください。', input: { label: 'クリームの名前', def: '', ph: '例: 革用のクリーム' } }, { id: 'no', label: '使わない', text: 'クリームなどは使わず、乾いた布でふくだけで大丈夫です。' }] },
+      { id: 'aging', q: '使ううちに色は変わりますか', opts: [{ id: 'yes', label: '変わる', text: '使ううちに、色や風合いが変わっていきます。' }] },
       { id: 'store', q: 'しまい方', opts: [{ id: 'air', label: '風通しよく', text: 'しまうときは袋から出して、風通しのよい所に置いてください。' }] }
     ], notes: [
       { id: 'transfer', text: '色の薄い服と重ねると、色がうつることがあります。' },
@@ -237,7 +245,7 @@ var CC = (function () {
       { id: 'scratch', text: '小さな傷は、使ううちに目立たなくなることがあります。' }
     ] },
     { id: 'metal', label: '金属のアクセサリー', hand: '形が少しずつ違います', qs: [
-      { id: 'kind', q: '金属の種類', opts: [{ id: 'brass', label: '真鍮', text: '素材は真鍮です。' }, { id: 'silver', label: 'シルバー', text: '素材はシルバーです。' }, { id: 'steel', label: 'ステンレス', text: '素材はステンレスです。' }, { id: 'other', label: '入力する', text: '素材は{x}です。', input: { label: '金属の名前', def: '', ph: '例: 銅' } }] },
+      { id: 'kind', q: '金属の種類', opts: [{ id: 'brass', label: '真鍮', text: '素材は真鍮です。' }, { id: 'silver', label: '銀', text: '素材は銀（シルバー）です。' }, { id: 'steel', label: 'ステンレス', text: '素材はステンレスです。' }, { id: 'other', label: '入力する', text: '素材は{x}です。', input: { label: '金属の名前', def: '', ph: '例: 銅' } }] },
       { id: 'sweat', q: '汗や水に濡れたら', opts: [{ id: 'wipe', label: 'ふく', text: '汗や水に濡れたら、やわらかい布でふいてください。' }] },
       { id: 'tarnish', q: '色が変わることがありますか', opts: [{ id: 'yes', label: '変わる', text: '空気や汗にふれると、色が変わることがあります。' }] },
       { id: 'polish', q: '色が変わったら', opts: [{ id: 'cloth', label: '磨き布', text: '色が変わってきたら、磨き布でやさしく磨いてください。' }, { id: 'shop', label: 'お店で', text: '色が変わってきたら、お店でお手入れします。お問い合わせください。' }] },
@@ -261,7 +269,7 @@ var CC = (function () {
     ] },
     { id: 'candle', label: 'キャンドル', hand: '色や模様が違います', qs: [
       { id: 'use', q: '火をつけて使いますか', opts: [{ id: 'fire', label: '火をつける', text: '火をつけるときは、耐熱のお皿の上に置いてください。' }, { id: 'deco', label: '飾る用', text: '火をつけずに、飾ってお楽しみください。' }] },
-      { id: 'time', q: '一度に火をつけておく時間', opts: [{ id: 'h2', label: '1〜2時間', text: '一度に火をつけておくのは、1〜2時間を目安にしてください。' }] },
+      { id: 'time', q: '一度に火をつけておく時間', opts: [{ id: 'set', label: '目安を書く', text: '一度に火をつけておくのは、{x}を目安にしてください。', input: { label: '目安の時間', def: '', ph: '例: 2時間' } }] },
       { id: 'wick', q: '芯が長くなったら', opts: [{ id: 'cut', label: '切る', text: '芯が長くなったら、短く切ってから火をつけてください。' }] },
       { id: 'store', q: 'しまう場所', opts: [{ id: 'cool', label: '涼しい所', text: '直射日光や暑い所をさけて保管してください。' }] }
     ], notes: [
@@ -437,7 +445,7 @@ var CC = (function () {
     var ans = sub(state.ans, m.id), ext = sub(state.extra, m.id);
     m.qs.forEach(function (q) {
       var li = h('li', { class: 'q' }), line = h('p', { class: 'line' }), extraBox = h('div', { class: 'extra' });
-      var row = h('div', { class: 'ans', role: 'group', 'aria-label': q.q });
+      var row = h('div', { class: 'ans' + (q.opts.length === 3 ? ' four' : ''), role: 'group', 'aria-label': q.q });
       var opts = q.opts.concat([{ id: CC.SKIP, label: '書かない' }]);
       var btns = opts.map(function (o) {
         var b = h('button', { type: 'button', class: o.id === CC.SKIP ? 'skip' : '', text: o.label, 'aria-pressed': 'false' });
@@ -542,13 +550,32 @@ var CC = (function () {
     if (!CC.hasBody(b)) inner.appendChild(h('p', { class: 'empty', text: '素材を選んで質問に答えると、ここにカードができます。' }));
     return inner;
   }
-  // はみ出し判定: カードの中身の高さが枠を超えたら印刷を止める
-  function overflowing() {
-    var inner = $('card').firstChild;
-    if (!inner) return false;
-    var need = 0; for (var i = 0; i < inner.children.length; i++) { var c = inner.children[i]; need = Math.max(need, c.offsetTop + c.offsetHeight - inner.offsetTop); }
-    return need > inner.clientHeight + 1;
+  // はみ出し判定: 中身を自然な高さで並べ、カードの内側の高さと比べる。
+  // 画面のプレビューと、画面の外に置いた印刷と同じ99mm幅のカードの両方で測り、どちらかで足りなければ止める。
+  // 余りが0.5行ぶん未満のときも止める（文字の描き方の差で、紙で最後の行が切れないように）
+  function measureCard(card) {
+    var inner = card.firstChild; if (!inner) return { over: false, lines: 0 };
+    var cs = getComputedStyle(card), avail = card.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var lineH = parseFloat(cs.fontSize) * 1.6;
+    inner.style.height = 'auto'; var foot = inner.querySelector('.foot'); if (foot) foot.style.marginTop = '0';
+    var natural = inner.scrollHeight;
+    inner.style.height = ''; if (foot) foot.style.marginTop = '';
+    var short = natural - (avail - lineH * 0.5);
+    return { over: short > 0, lines: short > 0 ? Math.max(1, Math.ceil(short / lineH)) : 0 };
   }
+  var measureBox = null;
+  function overInfo(b) {
+    if (!measureBox) {
+      measureBox = h('div', { 'aria-hidden': 'true', style: 'position:absolute;left:-10000px;top:0;width:99mm;visibility:hidden' });
+      document.body.appendChild(measureBox);
+    }
+    measureBox.textContent = '';
+    var card = h('div', { class: 'card', style: 'width:99mm;height:138mm;aspect-ratio:auto;border:.2mm dashed #9a9a9a' }, [cardInner(b)]);
+    measureBox.appendChild(h('div', { class: 'cardwrap', style: 'width:99mm;max-width:none;margin:0' }, [card]));
+    var a = measureCard(card), s = measureCard($('card'));
+    return { over: a.over || s.over, lines: Math.max(a.lines, s.lines) };
+  }
+  function overflowing() { return overInfo(CC.build(state)).over; }
   var lastBuild = null;
   function update(noSave) {
     if (noSave !== true) writeStore();
@@ -563,11 +590,12 @@ var CC = (function () {
     document.querySelectorAll('[id^="er-x-"]').forEach(function (e) { var k = 'x-' + e.id.slice(5); e.textContent = b.errs[k] || ''; var inp = e.parentNode.querySelector('input'); if (inp) inp.classList.toggle('bad', !!b.errs[k]); });
     var m = mat();
     $('fireWarn').hidden = !(m && CC.fireRemoved(state, m));
+    $('decoHint').hidden = !(m && m.id === 'candle' && (state.ans.candle || {}).use === 'deco');
     // 印刷・コピーの可否
-    var over = overflowing(), err = CC.hasErr(b), body = !!b.items.length || !!b.name;
+    var oi = overInfo(b), over = oi.over, err = CC.hasErr(b), body = !!b.items.length || !!b.name;
     var fm = $('fitMsg');
     if (err) { fm.className = 'fitmsg ng'; fm.textContent = '入力に直すところがあります（赤い欄）。直すと印刷・コピーできます。'; }
-    else if (over) { fm.className = 'fitmsg ng'; fm.textContent = 'カードに入りきりません。項目を減らすか、文を短くしてください。'; }
+    else if (over) { fm.className = 'fitmsg ng'; fm.textContent = 'カードに入りきりません（あと約' + oi.lines + '行ぶん多いです）。項目を減らすか、文を短くしてください。全部書きたいときは「文をコピー」で商品ページに貼れます。'; }
     else if (!body) { fm.className = 'fitmsg ok'; fm.textContent = ''; }
     else { fm.className = 'fitmsg ok'; fm.textContent = 'カードに入りきっています。'; }
     $('printBtn').disabled = err || over || !body;
@@ -577,10 +605,21 @@ var CC = (function () {
   }
 
   /* ---- 印刷 ---- */
-  $('printBtn').addEventListener('click', function () {
-    var b = CC.build(state); if (CC.hasErr(b) || overflowing()) { update(true); return; }
-    var pa = $('printArea'); pa.textContent = '';
+  // 印刷: ボタン・Ctrl+P・ブラウザのメニュー・iPhoneの共有→プリントのどれでも、印刷の直前に今の内容で作り直す
+  function fillPrint() {
+    var b = CC.build(state), pa = $('printArea'); pa.textContent = '';
+    var body = !!b.items.length || !!b.name;
+    if (CC.hasErr(b) || !body || overInfo(b).over) {
+      pa.appendChild(h('p', { class: 'pmsg', text: '印刷できる状態ではありません。画面に戻って、カードに入りきる内容にしてから印刷してください。' }));
+      return false;
+    }
     for (var i = 0; i < 4; i++) pa.appendChild(h('div', { class: 'cardwrap' }, [h('div', { class: 'card' }, [cardInner(b)])]));
+    return true;
+  }
+  window.addEventListener('beforeprint', fillPrint);
+  window.addEventListener('afterprint', function () { $('printArea').textContent = ''; });
+  $('printBtn').addEventListener('click', function () {
+    if (!fillPrint()) { update(true); return; }
     window.print();
   });
 
